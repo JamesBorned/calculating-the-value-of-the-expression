@@ -1,10 +1,3 @@
-# Реализация программы считывания беззнаковых
-# вещественных и целых чисел из файла
-# для проведения арифметических операций над ними
-# и последующей записью результата вычислений
-# с заданной точностью в исходный файл.
-# Выражение (a + b)/(c - d)
-
 .data
 	filein: .asciiz "input.txt"
 	storage: .space 1024
@@ -12,18 +5,18 @@
 	ten: .float 10.0
 
 .text
-# Открыть файл input.txt для чтения
+# Open the file input.txt for reading
 	li $v0, 13
 	la $a0, filein
 	li $a1, 0
 	syscall
 	move $s0, $v0
 
-	li $t1, 0 # содержит количество итераций
+	li $t1, 0 # contains the number of iterations
 	lwc1 $f30, ten
 	lwc1 $f28, ten
 	li $s5, 10
-# Считывание 0	
+# Reading 0	
 	li $v0, 14
 	move $a0, $s0
 	la $a1, byte
@@ -34,7 +27,7 @@
 	
 	beq $t0, 48, precision
 	
-precision: # Заданная точность вычислений
+precision: # The given accuracy of calculations
 	li $v0, 14
 	move $a0, $s0
 	la $a1, byte
@@ -43,12 +36,12 @@ precision: # Заданная точность вычислений
 	
 	lb $t0, byte
 	
-	beq $t0, 32, n # n - количество чисел
+	beq $t0, 32, n # n - amount of numbers
 	beq $t0, 46, delete # point
 	
-	add $t6, $t6, 1 # число знаков после запятой
+	add $t6, $t6, 1 # amount of chars after a point
 	add $t5, $t5, 1
-# Временное хранение данных	
+# Temporary data storage	
 	subu $sp, $sp, 4
 	sw $t0, 0($sp)
 	lw $t0, 0($sp)
@@ -72,7 +65,7 @@ n:
 	lb $t0, byte
 	
 	beq $t0, 32, main
-# Преобразование символа в цифру	
+# Converting a character to a digit	
 	sub $t0, $t0, 48
 
 	addu $t1, $t0, $t1
@@ -95,8 +88,8 @@ main:
 			beq $t0, 46, point
 			beq $t0, 32, gap
 			beq $t0, 13, exit
-			# CRLF - возврат каретки и перенос строки
-# Преобразование символа в цифру
+			# CRLF - carriage return and line break
+# Converting a character to a digit
 			sub $t0, $t0, 48
 	
 			addu $t2, $t0, $t2
@@ -118,7 +111,7 @@ point:
 	j afterpointchars
 
 afterpointchars:
-# Преобразование символов после точки	
+# Converting characters after a point	
 		li $v0, 14
 		move $a0, $s0
 		la $a1, byte
@@ -135,17 +128,17 @@ afterpointchars:
 	        addu $t3, $t0, $t3
 	        mul $t3, $t3, 10
 	        
-	        add $t7, $t7, 1 # количество цифр после запятой
+	        add $t7, $t7, 1 # number of digits after the decimal point
 	        
 	        j afterpointchars
 	        
 replacefigures:
-# Целая часть	
+# The whole part	
 	divu $t2, $t2, 10	
 				
 	mtc1 $t2, $f2
 	cvt.s.w $f2, $f2
-# Дробная часть	
+# Fractional part	
 	beqz $t3, continue
 	
 	divu $t3, $t3, 10
@@ -156,13 +149,13 @@ replacefigures:
 	jal divider
 
 		divider:
-# Привести "целую" дробную часть к нормальному виду
+# Bring the "whole" fractional part to the normal form
 			div.s $f4, $f4, $f30
 	
 			subu $t7, $t7, 1
 	
 			bnez $t7, divider
-# Число для вычисления результата			
+# The number to calculate the result			
 	add.s $f2, $f2, $f4
 	
 	continue:
@@ -175,7 +168,7 @@ replacefigures:
 	j division
 	
 division:
-# Переместить число в другой регистр 
+# Move a number to another register 
 	beq $t1, 3, move1number
 	beq $t1, 2, move2number
 	beq $t1, 1, move3number
@@ -216,17 +209,17 @@ multprecision:
 	
 	mul.s $f28, $f28, $f30 # 0.001 -> 1000
 	
-	sub $t6, $t6, 1 # число знаков после запятой
+	sub $t6, $t6, 1 # amount of chars after a point
 	bne $t6, 1, multprecision
 	
 	j writedouble 
 writeinteger:
-#Закрыть файл input.txt	 
+#Close file input.txt	 
 	 li $v0, 16
 	 move $a0, $s0
 	 syscall
 	
-	round.w.s $f16, $f18 # округление результата 5.0 -> 5
+	round.w.s $f16, $f18 # rounding the result 5.0 -> 5
 	mfc1 $t4, $f16
 	
 	la $s6, storage
@@ -236,7 +229,7 @@ writeinteger:
 	
 	invertresult:
 		div $t4, $t4, 10
-		mfhi $t2 # остаток от деления
+		mfhi $t2  # remainder from division
 		addu $t3, $t2, $t3
 		mul $t3, $t3, 10
 		
@@ -253,33 +246,33 @@ writeinteger:
 		
 		bnez $t3, writeresult
 	
-#Открыть файл input.txt для записи	
+#Open the file input.txt for the record	
 	 li $v0, 13
 	 la $a0, filein
 	 li $a1, 1
 	 syscall
 	 move $s1, $v0
-#Записать данные в файл input.txt	 
+#Write data to a file input.txt	 
 	 li $v0, 15
 	 move $a0, $s1
 	 la $a1, storage
 	 la $a2, 10
 	 syscall
-#Закрыть файл input.txt	 
+#Close the file input.txt	 
 	 li $v0, 16
 	 move $a0, $s1
 	 syscall
 	
 	j shutupshop
 writedouble:
-	#Закрыть файл input.txt	 
+	#Close the file input.txt	 
 	 li $v0, 16
 	 move $a0, $s0
 	 syscall
 	
 	mul.s $f20, $f18, $f28 # f.e. 1000*result
 	
-	round.w.s $f16, $f20 # округление результата
+	round.w.s $f16, $f20  # rounding the result
 	mfc1 $t4, $f16
 	
 	move $t0, $t4
@@ -313,19 +306,19 @@ writedouble:
 		beqz $t5, precisiontreg
 		bnez $t3, writeresult2
 	
-#Открыть файл input.txt для записи	
+#Open the file input.txt for the record	
 	 li $v0, 13
 	 la $a0, filein
 	 li $a1, 1
 	 syscall
 	 move $s1, $v0
-#Записать данные в файл input.txt	 
+#Write data to a file input.txt	 
 	 li $v0, 15
 	 move $a0, $s1
 	 la $a1, storage
 	 la $a2, 10
 	 syscall
-#Закрыть файл input.txt	 
+#Close the file input.txt	 
 	 li $v0, 16
 	 move $a0, $s1
 	 syscall
@@ -338,7 +331,7 @@ writedouble:
 				
 				j writeresult2
 			placeofpoint:
-# Количество разрядов в целом числе
+# Number of digits in the whole number
 				divu $t0, $t0, 10
 				
 				add $s4, $s4, 1
@@ -353,15 +346,7 @@ exit:
 	j multprecision
 
 shutupshop:	
-#Завершить программу	
+#End the programme	
 li $v0, 10
 syscall
-	
-	
-
-	
-
-	
-	
-
 	
